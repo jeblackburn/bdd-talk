@@ -27,6 +27,10 @@ dependencies {
     testImplementation(
             'org.springframework.boot:spring-boot-starter-test',
             'io.projectreactor:reactor-test',
-            'com.h2database:h2:1.4.199'
+            'com.h2database:h2:1.4.199',
+            'io.cucumber:cucumber-java:4.2.0',
+            'io.cucumber:cucumber-junit:4.2.0',
+            'io.cucumber:cucumber-spring:4.2.0'
+
     )
 }
