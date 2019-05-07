@@ -1,0 +1,23 @@
+Feature: Request reports from a user's report library
+
+  Scenario: Create one report request from a selected template
+    Given a report request specifying a template
+    When the report is submitted
+    Then 1 reports are sent to NMR
+
+  Scenario: Create multiple report requests from a selected folder
+    Given a report request specifying a folder
+    And the folder contains 2 templates
+    When the report is submitted
+    Then 2 reports are sent to NMR
+
+  Scenario Outline: Report requests derived from folders or templates
+    Given a report request specifying a <request-type>
+    And if a folder, containing <number-of-templates-per-folder>
+    When the report is submitted
+    Then <report-count> reports are sent to NMR
+
+    Examples:
+      | request-type | number-of-templates-per-folder | report-count |
+      | template     | -1                             | 1            |
+      | folder       | 2                              | 2            |

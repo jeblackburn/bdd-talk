@@ -1,0 +1,40 @@
+Feature: Create folder to report library
+
+  Scenario: user creates a folder in their report library
+    Given user TH8 logged in to orc
+    When the user requests to add a new folder to their report library
+    Then a folder is created and the folder's id is returned
+	
+	
+    @When("the user requests to add a new folder to their report library")
+    public void userRequests_toCreateANewFolder_inReportLibrary() throws Exception {
+
+        when(mockCreateFolderRepository.createFolder(any(), any(), any(), any())).thenReturn(10031);
+
+        OrcUser orcUser = new OrcUser();
+        orcUser.setUserId(loggedInUserId);
+
+        when(mockOrcUserRepository.getByUserId(loggedInUserId)).thenReturn(orcUser);
+        response = mockMvc.perform(post("/v1/reportLibrary/createFolder")
+            .content("{\n" +
+                "  \"destinationId\": 10,\n" +
+                "  \"folderName\": \"New Folder Name\"\n" +
+                "}")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .principal(mockOauth));
+    }
+
+    @Then("a folder is created and the folder's id is returned")
+    public void theNewFolder_isCreated_AndNodeSk_isReturned() throws UnsupportedEncodingException {
+        MvcResult mvcResult = response.andReturn();
+        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(mvcResult.getResponse().getContentAsString()).contains("10031");
+    }
+
+
+
+  Scenario: user lacks permission to create folder
+    Given user TH8 logged in to orc
+    When the user does not have permission to create folders
+    And the user requests to add a new folder to their report library
+    Then the folder is not created and an error is returned

@@ -1,0 +1,78 @@
+Feature: Create folder to report library
+
+  Scenario: user creates a folder in their report library
+    Given user TH8 logged in to orc
+    When the user has permission to add folders
+    And the user requests to add a new folder to their report library
+    Then a folder is created and nodeSk is returned
+
+  Scenario:
+    Given user TH8 logged in to orc
+    When the user does not have permission to create folders
+    And the user requests to add a new folder to their report library
+    Then the folder is not created and an error is returned
+	
+	
+package com.ntrs.orc.server.cucumber.steps;
+
+import com.ntrs.orc.server.entity.OrcUser;
+import com.ntrs.orc.server.exception.OrcRuntimeException;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.util.NestedServletException;
+
+import java.io.UnsupportedEncodingException;
+
+import static com.ntrs.orc.server.cucumber.steps.CucumberStepDefSetUp.*;
+import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+public class ReportLibraryStepDef {
+
+    @When("the user has permission to add folders")
+    public void user_can_add_folders() {
+        when(mockCreateFolderRepository.createFolder(any(), any(), any(), any())).thenReturn(10031);
+    }
+
+    @When("the user requests to add a new folder to their report library")
+    public void userRequests_toCreateANewFolder_inReportLibrary() throws Exception {
+        OrcUser orcUser = new OrcUser();
+        orcUser.setUserId(loggedInUserId);
+        when(mockOrcUserRepository.getByUserId(loggedInUserId)).thenReturn(orcUser);
+
+        try {
+            response = mockMvc.perform(post("/v1/reportLibrary/createFolder")
+                    .content("{\n" +
+                            "  \"destinationId\": 10,\n" +
+                            "  \"folderName\": \"New Folder Name\"\n" +
+                            "}")
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .principal(mockOauth));
+        } catch (NestedServletException e) {
+            thrown = e.getCause();
+        }
+    }
+
+    @When("the user does not have permission to create folders")
+    public void the_user_does_not_have_permission_to_create_folders() {
+        when(mockCreateFolderRepository.createFolder(any(), any(), any(), any()))
+                .thenThrow(OrcRuntimeException.class);
+    }
+
+    @Then("a folder is created and nodeSk is returned")
+    public void theNewFolder_isCreated_AndNodeSk_isReturned() throws UnsupportedEncodingException {
+        MvcResult mvcResult = response.andReturn();
+        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(mvcResult.getResponse().getContentAsString()).contains("10031");
+    }
+
+    @Then("the folder is not created and an error is returned")
+    public void the_folder_is_not_created_and_an_error_is_returned() throws Exception {
+        assertThat(thrown).isInstanceOf(OrcRuntimeException.class);
+    }
+}
